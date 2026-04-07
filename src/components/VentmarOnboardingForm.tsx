@@ -243,7 +243,7 @@ export default function VentmarOnboardingForm() {
       const { getSupabaseClient } = await import("../lib/supabaseClient");
       const supabase = getSupabaseClient();
       const payload = buildFormularioInsertPayload(formData);
-      const { error } = await supabase.from("formularios").insert([payload]);
+      const { error } = await supabase.from("Formularios").insert([payload]);
 
       if (error) {
         throw error;
@@ -259,7 +259,7 @@ export default function VentmarOnboardingForm() {
       setFeedback({
         type: "error",
         message:
-          "No pudimos enviar tu aplicacion. Revisa la configuracion de Supabase e intentalo nuevamente.",
+          "No pudimos registrar tu acceso todavia. Estamos verificando tu conexion con el sistema. Intenta nuevamente en unos segundos.",
       });
     } finally {
       setIsSubmitting(false);
