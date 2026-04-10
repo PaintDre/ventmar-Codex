@@ -127,8 +127,6 @@ const fieldClass =
   "w-full rounded-2xl border border-[#D9D9D9] bg-white px-4 py-3 text-slate-950 outline-none transition duration-200 placeholder:text-slate-400 focus:border-[#F26122] focus:ring-4 focus:ring-[#F26122]/15";
 const primaryButtonClass =
   "inline-flex items-center justify-center rounded-2xl bg-[#F26122] px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-[#D94E14] disabled:cursor-not-allowed disabled:bg-[#f5a47d]";
-const secondaryDarkButtonClass =
-  "inline-flex items-center justify-center rounded-2xl border border-white/14 bg-white/5 px-5 py-3 text-sm font-semibold text-slate-100 transition duration-200 hover:border-[#2E6FD8]/45 hover:bg-[#2E6FD8]/12 disabled:cursor-not-allowed disabled:opacity-50";
 const secondaryLightButtonClass =
   "inline-flex items-center justify-center rounded-2xl border border-[#D9D9D9] bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition duration-200 hover:border-[#2E6FD8]/45 hover:text-[#2E6FD8] disabled:cursor-not-allowed disabled:opacity-40";
 
@@ -273,6 +271,7 @@ function InputField(props: {
   required?: boolean;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  autoComplete?: string;
   className?: string;
 }) {
   return (
@@ -290,6 +289,7 @@ function InputField(props: {
         className={fieldClass}
         required={props.required}
         inputMode={props.inputMode}
+        autoComplete={props.autoComplete}
       />
     </div>
   );
@@ -406,6 +406,9 @@ export default function HomePage() {
 
   function scrollToForm() {
     formSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    requestAnimationFrame(() => {
+      formSectionRef.current?.focus();
+    });
   }
 
   function scrollToTop() {
@@ -506,11 +509,14 @@ export default function HomePage() {
 
   function renderOnboarding() {
     return (
-      <div className="space-y-8">
-        <div className="space-y-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-2">
-              <div className="inline-flex w-fit items-center rounded-full bg-[#2E6FD8]/12 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#2E6FD8]">
+        <div className="space-y-8">
+          <div className="space-y-5">
+            <div className="inline-flex w-fit items-center rounded-full bg-[#0F172A]/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+              Aplicacion breve de 5 pasos
+            </div>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-2">
+                <div className="inline-flex w-fit items-center rounded-full bg-[#2E6FD8]/12 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#2E6FD8]">
                 Paso {currentStep} de {TOTAL_STEPS}
               </div>
               <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">{stepCopy.label}</p>
@@ -542,6 +548,7 @@ export default function HomePage() {
                 value={formData.nombre}
                 onChange={handleInputChange}
                 placeholder="Tu nombre completo"
+                autoComplete="name"
                 required
                 className="space-y-2 sm:col-span-2"
               />
@@ -552,6 +559,7 @@ export default function HomePage() {
                 onChange={handleInputChange}
                 placeholder="+54 9 11 1234 5678"
                 type="tel"
+                autoComplete="tel"
                 required
               />
               <InputField
@@ -561,6 +569,7 @@ export default function HomePage() {
                 onChange={handleInputChange}
                 placeholder="tu@email.com"
                 type="email"
+                autoComplete="email"
                 required
               />
               <InputField
@@ -569,6 +578,7 @@ export default function HomePage() {
                 value={formData.ciudad}
                 onChange={handleInputChange}
                 placeholder="Tu ciudad"
+                autoComplete="address-level2"
                 required
               />
               <InputField
@@ -747,9 +757,14 @@ export default function HomePage() {
               <button type="button" onClick={scrollToForm} className={primaryButtonClass}>
                 Aplicar ahora
               </button>
-              <button type="button" onClick={scrollToTop} className={secondaryDarkButtonClass}>
-                Ver presentacion
-              </button>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-400">
+              <span>Aplicacion breve</span>
+              <span className="hidden text-slate-600 sm:inline">•</span>
+              <span>Filtro real por etapa</span>
+              <span className="hidden text-slate-600 sm:inline">•</span>
+              <span>Proveedores, stock y networking</span>
             </div>
 
             <div className="mt-10 grid gap-4 lg:grid-cols-3">
@@ -770,10 +785,11 @@ export default function HomePage() {
         <section
           id="onboarding"
           ref={formSectionRef}
-          className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(248,250,252,0.98)_0%,rgba(241,245,249,0.98)_100%)] p-5 text-slate-950 shadow-[0_24px_70px_rgba(2,6,23,0.2)] sm:p-7 lg:p-8"
+          tabIndex={-1}
+          className="scroll-mt-6 rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(248,250,252,0.98)_0%,rgba(241,245,249,0.98)_100%)] p-5 text-slate-950 shadow-[0_24px_70px_rgba(2,6,23,0.2)] outline-none sm:p-7 lg:p-8"
         >
           {screenMode === "success" ? (
-            <div className="space-y-6">
+          <div className="space-y-6">
               <div className="inline-flex w-fit items-center rounded-full bg-[#2E6FD8]/12 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#2E6FD8]">
                 Aplicacion enviada
               </div>
@@ -783,6 +799,9 @@ export default function HomePage() {
                 </h2>
                 <p className="max-w-2xl text-base leading-8 text-slate-600">
                   Recibimos tus datos y ahora el equipo de Ventmar puede revisar tu perfil comercial para ubicarte en el circuito mas adecuado del evento.
+                </p>
+                <p className="max-w-2xl text-sm leading-7 text-slate-500">
+                  Si tu perfil encaja con la disponibilidad del evento, el siguiente contacto va a llegar por los datos que acabas de dejar.
                 </p>
               </div>
 
