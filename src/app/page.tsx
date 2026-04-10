@@ -4,122 +4,210 @@ import Image from "next/image";
 import { createClient, type PostgrestError } from "@supabase/supabase-js";
 import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react";
 
-type ScreenMode = "apply" | "success";
-type NivelUsuario = "Estoy empezando" | "Ya vendo regularmente" | "Escalo campanas activas";
-type VentasSemanales = "Aun ninguna" | "1-10" | "10-50" | "50+";
-type ProveedorLocal = "Si" | "No" | "Algunos";
-type InteresStockArgentina = "Si quiero acceder" | "Quiero conocer primero";
-type CategoriaInteres = "Belleza" | "Fitness" | "Hogar" | "Tecnologia" | "Productos virales" | "Otros";
+type InteresPrincipal =
+  | "Quiero vender productos con Ventmar"
+  | "Soy proveedor y quiero trabajar con Ventmar"
+  | "Me interesa el agente IA para WhatsApp"
+  | "Me interesa una landing de alta conversión"
+  | "Me interesan banners publicitarios"
+  | "Me interesa contenido para redes"
+  | "Quiero conocer primero cómo funciona"
+  | "Quiero asistir a un evento privado";
+
+type NivelDropshipper = "Estoy empezando" | "Ya vendo regularmente" | "Escalo campañas activas";
+type VentasMensuales = "Aún no vendo" | "1 a 10 ventas al mes" | "10 a 50 ventas al mes" | "50 a 100 ventas al mes" | "100+ ventas al mes";
+type BuscaPrincipal = "Productos listos para vender" | "Mejor logística" | "Acceso a comunidad" | "Mentoría / acompañamiento" | "Participar en reunión privada";
+type TipoProveedor = "Importador" | "Mayorista local" | "Fabricante" | "Marca propia";
+type SituacionProveedor = "Estoy validando catálogo" | "Ya tengo stock listo para vender" | "Ya abastezco tiendas" | "Quiero una alianza comercial";
+type CategoriaProveedor = "Hogar" | "Tecnología" | "Belleza" | "Cocina" | "Herramientas" | "Salud" | "Fitness" | "Otra";
+type TipoNegocio = "Tienda online" | "Marca personal" | "E-commerce con WhatsApp" | "Agencia" | "Otro";
+type QueLograrWhatsApp = "Responder más rápido" | "Automatizar ventas" | "Recuperar leads" | "Cerrar más ventas" | "Soporte al cliente";
+type SituacionActualWhatsApp = "Atiendo manualmente" | "Tengo muchas consultas" | "Ya vendo pero quiero automatizar" | "Ya uso herramientas pero quiero algo mejor";
+type QueNecesitasLanding = "Landing para un producto" | "Landing para un servicio" | "Landing para tienda / marca" | "Optimizar una landing existente";
+type ObjetivoLanding = "Vender más" | "Mejorar conversión" | "Lanzar producto" | "Validar una oferta";
+type TipoBanners = "Meta Ads" | "Shopify / web" | "Promociones" | "Retargeting" | "Catálogo / carrusel";
+type QueBuscasBanners = "Más clics" | "Mejor imagen de marca" | "Más conversiones" | "Creatividades para campañas";
+type ContenidoRedes = "Post para Instagram" | "Historias" | "Reels / ideas visuales" | "Copys" | "Calendario de contenido";
+type ObjetivoContenido = "Vender más" | "Tener presencia en redes" | "Crear contenido constante" | "Escalar una marca";
+type QueInteresaEvento = "Networking" | "Aprender de Ventmar" | "Conocer proveedores" | "Conocer herramientas" | "Crecer en e-commerce";
+type QueConocer = "Cómo vender con Ventmar" | "Cómo funciona la comunidad" | "Qué productos manejan" | "Qué servicios ofrecen";
 
 type FormData = {
+  interes_principal: InteresPrincipal | "";
+  // Dropshipper
+  nivel_dropshipper: NivelDropshipper | "";
+  ventas_mensuales: VentasMensuales | "";
+  busca_principal: BuscaPrincipal | "";
+  // Proveedor
+  tipo_proveedor: TipoProveedor | "";
+  situacion_proveedor: SituacionProveedor | "";
+  categorias_proveedor: CategoriaProveedor[];
+  interes_reunion_proveedor: "Sí" | "No" | "";
+  // WhatsApp IA
+  tipo_negocio_whatsapp: TipoNegocio | "";
+  que_lograr_whatsapp: QueLograrWhatsApp | "";
+  situacion_actual_whatsapp: SituacionActualWhatsApp | "";
+  // Landing
+  que_necesitas_landing: QueNecesitasLanding | "";
+  objetivo_landing: ObjetivoLanding | "";
+  // Banners
+  tipo_banners: TipoBanners | "";
+  que_buscas_banners: QueBuscasBanners | "";
+  // Contenido
+  contenido_redes: ContenidoRedes | "";
+  objetivo_contenido: ObjetivoContenido | "";
+  // Evento
+  que_interesa_evento: QueInteresaEvento | "";
+  // Explorador
+  que_conocer: QueConocer | "";
+  // Datos comunes
   nombre: string;
   whatsapp: string;
   email: string;
   ciudad: string;
-  dni: string;
-  nivel_usuario: NivelUsuario | "";
-  ventas_semanales: VentasSemanales | "";
-  proveedor_local: ProveedorLocal | "";
-  categorias_interes: CategoriaInteres[];
-  producto_interes: string;
-  interes_stock_argentina: InteresStockArgentina | "";
+  empresa_marca?: string;
+  dni?: string;
 };
 
 type FeedbackState = { type: "idle" | "success" | "error"; message: string };
-type InsertPayload = Record<string, string | CategoriaInteres[]>;
+type InsertPayload = Record<string, string | string[]>;
 
-const TOTAL_STEPS = 5;
 const TABLE_NAME = "Formularios";
 const FORM_FIELDS = [
+  "interes_principal",
+  "nivel_dropshipper",
+  "ventas_mensuales",
+  "busca_principal",
+  "tipo_proveedor",
+  "situacion_proveedor",
+  "categorias_proveedor",
+  "interes_reunion_proveedor",
+  "tipo_negocio_whatsapp",
+  "que_lograr_whatsapp",
+  "situacion_actual_whatsapp",
+  "que_necesitas_landing",
+  "objetivo_landing",
+  "tipo_banners",
+  "que_buscas_banners",
+  "contenido_redes",
+  "objetivo_contenido",
+  "que_interesa_evento",
+  "que_conocer",
   "nombre",
   "whatsapp",
   "email",
   "ciudad",
+  "empresa_marca",
   "dni",
-  "nivel_usuario",
-  "ventas_semanales",
-  "proveedor_local",
-  "categorias_interes",
-  "producto_interes",
-  "interes_stock_argentina",
 ] as const;
 const COLUMN_CANDIDATES: Record<(typeof FORM_FIELDS)[number], string[]> = {
+  interes_principal: ["interes_principal"],
+  nivel_dropshipper: ["nivel_dropshipper"],
+  ventas_mensuales: ["ventas_mensuales"],
+  busca_principal: ["busca_principal"],
+  tipo_proveedor: ["tipo_proveedor"],
+  situacion_proveedor: ["situacion_proveedor"],
+  categorias_proveedor: ["categorias_proveedor"],
+  interes_reunion_proveedor: ["interes_reunion_proveedor"],
+  tipo_negocio_whatsapp: ["tipo_negocio_whatsapp"],
+  que_lograr_whatsapp: ["que_lograr_whatsapp"],
+  situacion_actual_whatsapp: ["situacion_actual_whatsapp"],
+  que_necesitas_landing: ["que_necesitas_landing"],
+  objetivo_landing: ["objetivo_landing"],
+  tipo_banners: ["tipo_banners"],
+  que_buscas_banners: ["que_buscas_banners"],
+  contenido_redes: ["contenido_redes"],
+  objetivo_contenido: ["objetivo_contenido"],
+  que_interesa_evento: ["que_interesa_evento"],
+  que_conocer: ["que_conocer"],
   nombre: ["nombre"],
   whatsapp: ["whatsapp"],
   email: ["email"],
   ciudad: ["ciudad"],
+  empresa_marca: ["empresa_marca"],
   dni: ["dni"],
-  nivel_usuario: ["tipo_usuario", "nivel_usuario"],
-  ventas_semanales: ["ventas_semanales"],
-  proveedor_local: ["proveedor_local"],
-  categorias_interes: ["categorias_interes"],
-  producto_interes: ["producto_interes"],
-  interes_stock_argentina: ["interes_stock_argentina"],
 };
 
-const STEP_COPY = [
-  {
-    label: "Identidad",
-    title: "Aplicacion de acceso al evento privado Ventmar Argentina",
-    description: "Queremos validar tu perfil y reservar tu lugar con informacion precisa desde el inicio.",
-  },
-  {
-    label: "Nivel actual",
-    title: "Contanos en que momento estas",
-    description: "Esto nos ayuda a segmentar el acceso y preparar propuestas acordes a tu etapa comercial.",
-  },
-  {
-    label: "Actividad comercial",
-    title: "Entendamos tu operacion actual",
-    description: "Necesitamos una referencia simple de movimiento semanal y relacion con proveedores locales.",
-  },
-  {
-    label: "Interes comercial",
-    title: "Que categorias y productos queres trabajar",
-    description: "Usamos esta informacion para conectar asistentes con oportunidades mas relevantes dentro del evento.",
-  },
-  {
-    label: "Acceso al evento",
-    title: "Ultimo paso para evaluar tu acceso",
-    description: "Con esta respuesta definimos como presentarte opciones de stock y proveedores en Argentina.",
-  },
-] as const;
+const INTERES_OPTIONS: InteresPrincipal[] = [
+  "Quiero vender productos con Ventmar",
+  "Soy proveedor y quiero trabajar con Ventmar",
+  "Me interesa el agente IA para WhatsApp",
+  "Me interesa una landing de alta conversión",
+  "Me interesan banners publicitarios",
+  "Me interesa contenido para redes",
+  "Quiero conocer primero cómo funciona",
+  "Quiero asistir a un evento privado",
+];
 
-const NIVEL_OPTIONS: NivelUsuario[] = ["Estoy empezando", "Ya vendo regularmente", "Escalo campanas activas"];
-const VENTAS_OPTIONS: VentasSemanales[] = ["Aun ninguna", "1-10", "10-50", "50+"];
-const PROVEEDOR_OPTIONS: ProveedorLocal[] = ["Si", "No", "Algunos"];
-const EVENTO_OPTIONS: InteresStockArgentina[] = ["Si quiero acceder", "Quiero conocer primero"];
-const CATEGORY_OPTIONS: CategoriaInteres[] = ["Belleza", "Fitness", "Hogar", "Tecnologia", "Productos virales", "Otros"];
+const NIVEL_DROPSHIPPER_OPTIONS: NivelDropshipper[] = ["Estoy empezando", "Ya vendo regularmente", "Escalo campañas activas"];
+const VENTAS_MENSUALES_OPTIONS: VentasMensuales[] = ["Aún no vendo", "1 a 10 ventas al mes", "10 a 50 ventas al mes", "50 a 100 ventas al mes", "100+ ventas al mes"];
+const BUSCA_PRINCIPAL_OPTIONS: BuscaPrincipal[] = ["Productos listos para vender", "Mejor logística", "Acceso a comunidad", "Mentoría / acompañamiento", "Participar en reunión privada"];
+
+const TIPO_PROVEEDOR_OPTIONS: TipoProveedor[] = ["Importador", "Mayorista local", "Fabricante", "Marca propia"];
+const SITUACION_PROVEEDOR_OPTIONS: SituacionProveedor[] = ["Estoy validando catálogo", "Ya tengo stock listo para vender", "Ya abastezco tiendas", "Quiero una alianza comercial"];
+const CATEGORIA_PROVEEDOR_OPTIONS: CategoriaProveedor[] = ["Hogar", "Tecnología", "Belleza", "Cocina", "Herramientas", "Salud", "Fitness", "Otra"];
+
 const SEGMENTS = [
   {
     eyebrow: "Perfil 01",
     title: "Estoy empezando",
-    description: "Para quienes estan entrando al juego y necesitan productos, criterio y estructura para vender mejor.",
+    description: "Para quienes están entrando al juego y necesitan productos, criterio y estructura para vender mejor.",
   },
   {
     eyebrow: "Perfil 02",
     title: "Ya vendo regularmente",
-    description: "Pensado para operadores que buscan nuevos proveedores, stock local y oportunidades mas estables.",
+    description: "Para operadores que buscan nuevos proveedores, stock local y oportunidades más estables.",
   },
   {
     eyebrow: "Perfil 03",
-    title: "Escalo campanas activas",
-    description: "Ideal para quienes ya tienen volumen y quieren networking, velocidad operativa y mejor oferta.",
+    title: "Escalo campañas activas",
+    description: "Para quienes ya tienen volumen y quieren networking, velocidad operativa y mejor oferta.",
   },
-] as const;
+];
+
+const TIPO_NEGOCIO_WHATSAPP_OPTIONS: TipoNegocio[] = ["Tienda online", "Marca personal", "E-commerce con WhatsApp", "Agencia", "Otro"];
+const QUE_LOGRAR_WHATSAPP_OPTIONS: QueLograrWhatsApp[] = ["Responder más rápido", "Automatizar ventas", "Recuperar leads", "Cerrar más ventas", "Soporte al cliente"];
+const SITUACION_ACTUAL_WHATSAPP_OPTIONS: SituacionActualWhatsApp[] = ["Atiendo manualmente", "Tengo muchas consultas", "Ya vendo pero quiero automatizar", "Ya uso herramientas pero quiero algo mejor"];
+
+const QUE_NECESITAS_LANDING_OPTIONS: QueNecesitasLanding[] = ["Landing para un producto", "Landing para un servicio", "Landing para tienda / marca", "Optimizar una landing existente"];
+const OBJETIVO_LANDING_OPTIONS: ObjetivoLanding[] = ["Vender más", "Mejorar conversión", "Lanzar producto", "Validar una oferta"];
+
+const TIPO_BANNERS_OPTIONS: TipoBanners[] = ["Meta Ads", "Shopify / web", "Promociones", "Retargeting", "Catálogo / carrusel"];
+const QUE_BUSCAS_BANNERS_OPTIONS: QueBuscasBanners[] = ["Más clics", "Mejor imagen de marca", "Más conversiones", "Creatividades para campañas"];
+
+const CONTENIDO_REDES_OPTIONS: ContenidoRedes[] = ["Post para Instagram", "Historias", "Reels / ideas visuales", "Copys", "Calendario de contenido"];
+const OBJETIVO_CONTENIDO_OPTIONS: ObjetivoContenido[] = ["Vender más", "Tener presencia en redes", "Crear contenido constante", "Escalar una marca"];
+
+const QUE_INTERESA_EVENTO_OPTIONS: QueInteresaEvento[] = ["Networking", "Aprender de Ventmar", "Conocer proveedores", "Conocer herramientas", "Crecer en e-commerce"];
+
+const QUE_CONOCER_OPTIONS: QueConocer[] = ["Cómo vender con Ventmar", "Cómo funciona la comunidad", "Qué productos manejan", "Qué servicios ofrecen"];
 
 const INITIAL_FORM_DATA: FormData = {
+  interes_principal: "",
+  nivel_dropshipper: "",
+  ventas_mensuales: "",
+  busca_principal: "",
+  tipo_proveedor: "",
+  situacion_proveedor: "",
+  categorias_proveedor: [],
+  interes_reunion_proveedor: "",
+  tipo_negocio_whatsapp: "",
+  que_lograr_whatsapp: "",
+  situacion_actual_whatsapp: "",
+  que_necesitas_landing: "",
+  objetivo_landing: "",
+  tipo_banners: "",
+  que_buscas_banners: "",
+  contenido_redes: "",
+  objetivo_contenido: "",
+  que_interesa_evento: "",
+  que_conocer: "",
   nombre: "",
   whatsapp: "",
   email: "",
   ciudad: "",
+  empresa_marca: "",
   dni: "",
-  nivel_usuario: "",
-  ventas_semanales: "",
-  proveedor_local: "",
-  categorias_interes: [],
-  producto_interes: "",
-  interes_stock_argentina: "",
 };
 
 const EMPTY_FEEDBACK: FeedbackState = { type: "idle", message: "" };
@@ -137,19 +225,149 @@ const canUseSupabase = Boolean(supabaseUrl && supabaseAnonKey && !hasPlaceholder
 const supabase = canUseSupabase ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 function validateStep(step: number, data: FormData) {
-  if (step === 1 && (!data.nombre || !data.whatsapp || !data.email || !data.ciudad || !data.dni)) {
-    return "Completa nombre, WhatsApp, email, ciudad y DNI para continuar.";
+  if (step === 1 && !data.interes_principal) {
+    return "Selecciona qué te interesa de Ventmar para continuar.";
   }
-  if (step === 2 && !data.nivel_usuario) return "Selecciona tu nivel actual para continuar.";
-  if (step === 3 && (!data.ventas_semanales || !data.proveedor_local)) {
-    return "Indica tus ventas semanales y si ya trabajas con proveedor local.";
+
+  // Validation for dropshipper path
+  if (data.interes_principal === "Quiero vender productos con Ventmar") {
+    if (step === 2 && !data.nivel_dropshipper) {
+      return "Selecciona tu nivel de experiencia.";
+    }
+    if (step === 3 && !data.ventas_mensuales) {
+      return "Selecciona tus ventas mensuales aproximadas.";
+    }
+    if (step === 4 && !data.busca_principal) {
+      return "Selecciona qué buscas principalmente.";
+    }
+    if (step === 5) {
+      if (!data.nombre.trim()) return "Ingresa tu nombre completo.";
+      if (!data.whatsapp.trim()) return "Ingresa tu número de WhatsApp.";
+      if (!data.email.trim()) return "Ingresa tu email.";
+      if (!data.ciudad.trim()) return "Ingresa tu ciudad.";
+      if (data.busca_principal === "Participar en reunión privada" && !data.dni?.trim()) {
+        return "Ingresa tu DNI para el evento privado.";
+      }
+    }
   }
-  if (step === 4 && data.categorias_interes.length === 0) {
-    return "Selecciona al menos una categoria de interes para continuar.";
+
+  // Validation for provider path
+  if (data.interes_principal === "Soy proveedor y quiero trabajar con Ventmar") {
+    if (step === 2 && !data.tipo_proveedor) {
+      return "Selecciona qué tipo de proveedor sos.";
+    }
+    if (step === 3 && !data.situacion_proveedor) {
+      return "Selecciona tu situación actual.";
+    }
+    if (step === 4 && data.categorias_proveedor.length === 0) {
+      return "Selecciona al menos una categoría que manejas.";
+    }
+    if (step === 5 && !data.interes_reunion_proveedor) {
+      return "Selecciona si te interesa participar en una reunión privada.";
+    }
+    if (step === 6) {
+      if (!data.nombre.trim()) return "Ingresa tu nombre completo.";
+      if (!data.whatsapp.trim()) return "Ingresa tu número de WhatsApp.";
+      if (!data.email.trim()) return "Ingresa tu email.";
+      if (!data.ciudad.trim()) return "Ingresa tu ciudad.";
+      if (!data.empresa_marca?.trim()) return "Ingresa el nombre de tu empresa o marca.";
+    }
   }
-  if (step === 5 && !data.interes_stock_argentina) {
-    return "Selecciona tu interes sobre stock en Argentina para finalizar.";
+
+  // Validation for WhatsApp IA path
+  if (data.interes_principal === "Me interesa el agente IA para WhatsApp") {
+    if (step === 2 && !data.tipo_negocio_whatsapp) {
+      return "Selecciona qué tipo de negocio tienes.";
+    }
+    if (step === 3 && !data.que_lograr_whatsapp) {
+      return "Selecciona qué quieres lograr con WhatsApp.";
+    }
+    if (step === 4 && !data.situacion_actual_whatsapp) {
+      return "Selecciona tu situación actual.";
+    }
+    if (step === 5) {
+      if (!data.nombre.trim()) return "Ingresa tu nombre completo.";
+      if (!data.whatsapp.trim()) return "Ingresa tu número de WhatsApp.";
+      if (!data.email.trim()) return "Ingresa tu email.";
+      if (!data.ciudad.trim()) return "Ingresa tu ciudad.";
+    }
   }
+
+  // Validation for landing path
+  if (data.interes_principal === "Me interesa una landing de alta conversión") {
+    if (step === 2 && !data.que_necesitas_landing) {
+      return "Selecciona qué necesitas.";
+    }
+    if (step === 3 && !data.objetivo_landing) {
+      return "Selecciona cuál es tu objetivo.";
+    }
+    if (step === 4) {
+      if (!data.nombre.trim()) return "Ingresa tu nombre completo.";
+      if (!data.whatsapp.trim()) return "Ingresa tu número de WhatsApp.";
+      if (!data.email.trim()) return "Ingresa tu email.";
+      if (!data.ciudad.trim()) return "Ingresa tu ciudad.";
+    }
+  }
+
+  // Validation for banners path
+  if (data.interes_principal === "Me interesan banners publicitarios") {
+    if (step === 2 && !data.tipo_banners) {
+      return "Selecciona qué tipo de banners necesitas.";
+    }
+    if (step === 3 && !data.que_buscas_banners) {
+      return "Selecciona qué buscas.";
+    }
+    if (step === 4) {
+      if (!data.nombre.trim()) return "Ingresa tu nombre completo.";
+      if (!data.whatsapp.trim()) return "Ingresa tu número de WhatsApp.";
+      if (!data.email.trim()) return "Ingresa tu email.";
+      if (!data.ciudad.trim()) return "Ingresa tu ciudad.";
+    }
+  }
+
+  // Validation for content path
+  if (data.interes_principal === "Me interesa contenido para redes") {
+    if (step === 2 && !data.contenido_redes) {
+      return "Selecciona qué contenido necesitas.";
+    }
+    if (step === 3 && !data.objetivo_contenido) {
+      return "Selecciona cuál es tu objetivo.";
+    }
+    if (step === 4) {
+      if (!data.nombre.trim()) return "Ingresa tu nombre completo.";
+      if (!data.whatsapp.trim()) return "Ingresa tu número de WhatsApp.";
+      if (!data.email.trim()) return "Ingresa tu email.";
+      if (!data.ciudad.trim()) return "Ingresa tu ciudad.";
+    }
+  }
+
+  // Validation for event path
+  if (data.interes_principal === "Quiero asistir a un evento privado") {
+    if (step === 2 && !data.que_interesa_evento) {
+      return "Selecciona qué te interesa del evento.";
+    }
+    if (step === 3) {
+      if (!data.nombre.trim()) return "Ingresa tu nombre completo.";
+      if (!data.whatsapp.trim()) return "Ingresa tu número de WhatsApp.";
+      if (!data.email.trim()) return "Ingresa tu email.";
+      if (!data.ciudad.trim()) return "Ingresa tu ciudad.";
+      if (!data.dni?.trim()) return "Ingresa tu DNI para validar el acceso.";
+    }
+  }
+
+  // Validation for explorer path
+  if (data.interes_principal === "Quiero conocer primero cómo funciona") {
+    if (step === 2 && !data.que_conocer) {
+      return "Selecciona qué te interesa conocer.";
+    }
+    if (step === 3) {
+      if (!data.nombre.trim()) return "Ingresa tu nombre completo.";
+      if (!data.whatsapp.trim()) return "Ingresa tu número de WhatsApp.";
+      if (!data.email.trim()) return "Ingresa tu email.";
+      if (!data.ciudad.trim()) return "Ingresa tu ciudad.";
+    }
+  }
+
   return "";
 }
 
@@ -231,18 +449,6 @@ function buildInsertPayload(data: FormData, availableColumns: Set<string>) {
   const payload: InsertPayload = {};
 
   FORM_FIELDS.forEach((field) => {
-    if (field === "nivel_usuario") {
-      if (availableColumns.has("tipo_usuario")) {
-        payload.tipo_usuario = data.nivel_usuario;
-      }
-
-      if (availableColumns.has("nivel_usuario")) {
-        payload.nivel_usuario = data.nivel_usuario;
-      }
-
-      return;
-    }
-
     const targetColumn = COLUMN_CANDIDATES[field].find((candidate) =>
       availableColumns.has(candidate),
     );
@@ -251,12 +457,17 @@ function buildInsertPayload(data: FormData, availableColumns: Set<string>) {
       return;
     }
 
-    if (field === "categorias_interes") {
-      payload[targetColumn] = data.categorias_interes;
+    if (field === "categorias_proveedor") {
+      payload[targetColumn] = data.categorias_proveedor;
       return;
     }
 
-    payload[targetColumn] = data[field];
+    const value = data[field];
+    if (value === undefined) {
+      return;
+    }
+
+    payload[targetColumn] = value as string | string[];
   });
 
   return payload;
@@ -316,7 +527,7 @@ function SelectField(props: {
         className={fieldClass}
         required={props.required}
       >
-        <option value="">Selecciona una opcion</option>
+        <option value="">Selecciona una opción</option>
         {props.options.map((option) => (
           <option key={option} value={option}>
             {option}
@@ -327,8 +538,44 @@ function SelectField(props: {
   );
 }
 
+function CheckboxGroup(props: {
+  label: string;
+  options: readonly string[];
+  selected: string[];
+  onToggle: (option: string) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-medium text-slate-800">{props.label}</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {props.options.map((option) => {
+          const active = props.selected.includes(option);
+          return (
+            <label
+              key={option}
+              className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition ${
+                active
+                  ? "border-[#F26122] bg-[#F26122]/10 text-[#B94818]"
+                  : "border-[#D9D9D9] bg-white text-slate-700 hover:border-[#2E6FD8]/35"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={active}
+                onChange={() => props.onToggle(option)}
+                className="h-4 w-4 rounded border-slate-300 text-[#F26122] focus:ring-[#F26122]"
+              />
+              <span className="text-sm font-medium">{option}</span>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
-  const [screenMode, setScreenMode] = useState<ScreenMode>("apply");
+  const [screenMode, setScreenMode] = useState<"apply" | "success">("apply");
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
   const [feedback, setFeedback] = useState<FeedbackState>(EMPTY_FEEDBACK);
@@ -384,12 +631,6 @@ export default function HomePage() {
           `Warning: la tabla ${TABLE_NAME} no tiene estas columnas del onboarding: ${missingFields.join(", ")}.`,
         );
       }
-
-      if (nextColumns.has("tipo_usuario") && !nextColumns.has("nivel_usuario")) {
-        console.warn(
-          `Warning: la tabla ${TABLE_NAME} usa "tipo_usuario". Se mapeara automaticamente desde "nivel_usuario".`,
-        );
-      }
     }
 
     loadAvailableColumns().catch((error) => {
@@ -401,8 +642,31 @@ export default function HomePage() {
     };
   }, []);
 
-  const progress = (currentStep / TOTAL_STEPS) * 100;
-  const stepCopy = STEP_COPY[currentStep - 1];
+  const getTotalSteps = () => {
+    if (!formData.interes_principal) return 1;
+    switch (formData.interes_principal) {
+      case "Quiero vender productos con Ventmar":
+        return 5;
+      case "Soy proveedor y quiero trabajar con Ventmar":
+        return 6;
+      case "Me interesa el agente IA para WhatsApp":
+        return 5;
+      case "Me interesa una landing de alta conversión":
+        return 4;
+      case "Me interesan banners publicitarios":
+        return 4;
+      case "Me interesa contenido para redes":
+        return 4;
+      case "Quiero conocer primero cómo funciona":
+        return 3;
+      case "Quiero asistir a un evento privado":
+        return 3;
+      default:
+        return 1;
+    }
+  };
+
+  const progress = (currentStep / getTotalSteps()) * 100;
 
   function scrollToForm() {
     formSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -430,17 +694,17 @@ export default function HomePage() {
     setFormData((current) => ({ ...current, [key]: event.target.value }) as FormData);
   }
 
-  function handleSelectChange(event: ChangeEvent<HTMLSelectElement>) {
+  function handleSelectChange(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const key = event.target.name as keyof FormData;
     setFormData((current) => ({ ...current, [key]: event.target.value }) as FormData);
   }
 
-  function handleCategoryToggle(category: CategoriaInteres) {
+  function handleCategoryToggle(category: CategoriaProveedor) {
     setFormData((current) => ({
       ...current,
-      categorias_interes: current.categorias_interes.includes(category)
-        ? current.categorias_interes.filter((item) => item !== category)
-        : [...current.categorias_interes, category],
+      categorias_proveedor: current.categorias_proveedor.includes(category)
+        ? current.categorias_proveedor.filter((item) => item !== category)
+        : [...current.categorias_proveedor, category],
     }));
   }
 
@@ -448,7 +712,7 @@ export default function HomePage() {
     const message = validateStep(currentStep, formData);
     if (message) return setFeedback({ type: "error", message });
     setFeedback(EMPTY_FEEDBACK);
-    setCurrentStep((step) => Math.min(step + 1, TOTAL_STEPS));
+    setCurrentStep((step) => Math.min(step + 1, getTotalSteps()));
   }
 
   function previousStep() {
@@ -508,49 +772,607 @@ export default function HomePage() {
   }
 
   function renderOnboarding() {
+    const totalSteps = getTotalSteps();
+    const stepTitles: Record<number, { title: string; description: string }> = {
+      1: {
+        title: "¿Qué te interesa de Ventmar?",
+        description: "Selecciona la opción que mejor describe tu interés para personalizar tu experiencia.",
+      },
+    };
+
+    // Dynamic step titles based on interest
+    if (formData.interes_principal === "Quiero vender productos con Ventmar") {
+      stepTitles[2] = { title: "¿En qué nivel estás?", description: "Esto nos ayuda a entender tu experiencia." };
+      stepTitles[3] = { title: "¿Cuánto vendes al mes?", description: "Referencia aproximada de tu actividad comercial." };
+      stepTitles[4] = { title: "¿Qué buscas principalmente?", description: "Selecciona lo que más te interesa." };
+      stepTitles[5] = { title: "Datos de contacto", description: "Información necesaria para contactarte." };
+    } else if (formData.interes_principal === "Soy proveedor y quiero trabajar con Ventmar") {
+      stepTitles[2] = { title: "¿Qué tipo de proveedor sos?", description: "Clasifica tu tipo de negocio." };
+      stepTitles[3] = { title: "¿Cuál es tu capacidad o situación actual?", description: "Describe tu operación actual." };
+      stepTitles[4] = { title: "¿Qué categorías manejas?", description: "Selecciona las categorías de productos." };
+      stepTitles[5] = { title: "¿Te interesa participar en una reunión privada?", description: "Opcional para networking." };
+      stepTitles[6] = { title: "Datos de contacto", description: "Información necesaria para contactarte." };
+    } else if (formData.interes_principal === "Me interesa el agente IA para WhatsApp") {
+      stepTitles[2] = { title: "¿Qué tipo de negocio tienes?", description: "Clasifica tu tipo de operación." };
+      stepTitles[3] = { title: "¿Qué quieres lograr con tu WhatsApp?", description: "Objetivos principales." };
+      stepTitles[4] = { title: "¿Cuál es tu situación actual?", description: "Estado actual de tu atención." };
+      stepTitles[5] = { title: "Datos de contacto", description: "Información necesaria para contactarte." };
+    } else if (formData.interes_principal === "Me interesa una landing de alta conversión") {
+      stepTitles[2] = { title: "¿Qué necesitas?", description: "Tipo de landing requerida." };
+      stepTitles[3] = { title: "¿Cuál es tu objetivo?", description: "Resultado esperado." };
+      stepTitles[4] = { title: "Datos de contacto", description: "Información necesaria para contactarte." };
+    } else if (formData.interes_principal === "Me interesan banners publicitarios") {
+      stepTitles[2] = { title: "¿Qué tipo de banners necesitas?", description: "Plataformas y formatos." };
+      stepTitles[3] = { title: "¿Qué buscas?", description: "Objetivos de los banners." };
+      stepTitles[4] = { title: "Datos de contacto", description: "Información necesaria para contactarte." };
+    } else if (formData.interes_principal === "Me interesa contenido para redes") {
+      stepTitles[2] = { title: "¿Qué contenido necesitas?", description: "Tipos de contenido." };
+      stepTitles[3] = { title: "¿Cuál es tu objetivo?", description: "Resultado esperado." };
+      stepTitles[4] = { title: "Datos de contacto", description: "Información necesaria para contactarte." };
+    } else if (formData.interes_principal === "Quiero asistir a un evento privado") {
+      stepTitles[2] = { title: "¿Qué te interesa del evento?", description: "Razones para asistir." };
+      stepTitles[3] = { title: "Datos de contacto", description: "Información necesaria para validar acceso." };
+    } else if (formData.interes_principal === "Quiero conocer primero cómo funciona") {
+      stepTitles[2] = { title: "¿Qué te interesa conocer?", description: "Aspectos específicos." };
+      stepTitles[3] = { title: "Datos de contacto", description: "Información necesaria para contactarte." };
+    }
+
+    const currentStepInfo = stepTitles[currentStep] || stepTitles[1];
+
     return (
-        <div className="space-y-8">
-          <div className="space-y-5">
-            <div className="inline-flex w-fit items-center rounded-full bg-[#0F172A]/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-              Aplicacion breve de 5 pasos
-            </div>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-2">
-                <div className="inline-flex w-fit items-center rounded-full bg-[#2E6FD8]/12 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#2E6FD8]">
-                Paso {currentStep} de {TOTAL_STEPS}
+      <div className="space-y-8">
+        <div className="space-y-5">
+          <div className="inline-flex w-fit items-center rounded-full bg-[#0F172A]/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+            Aplicación personalizada
+          </div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <div className="inline-flex w-fit items-center rounded-full bg-[#2E6FD8]/12 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#2E6FD8]">
+                Paso {currentStep} de {totalSteps}
               </div>
-              <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">{stepCopy.label}</p>
             </div>
             <div className="rounded-full bg-[#F2D35E]/30 px-4 py-2 text-sm font-semibold text-[#8A6500]">
               {Math.round(progress)}% completado
             </div>
           </div>
+        </div>
 
-          <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-            <div
-              className="h-full rounded-full bg-[linear-gradient(90deg,#F2D35E_0%,#F26122_100%)] transition-all duration-500 ease-out"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+        <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+          <div
+            className="h-full rounded-full bg-[linear-gradient(90deg,#F2D35E_0%,#F26122_100%)] transition-all duration-500 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
 
-          <div className="space-y-3">
-            <h2 className="text-3xl font-semibold text-[#0F172A] sm:text-[2.2rem]">{stepCopy.title}</h2>
-            <p className="max-w-2xl text-base leading-8 text-slate-600">{stepCopy.description}</p>
-          </div>
+        <div className="space-y-3">
+          <h2 className="text-3xl font-semibold text-[#0F172A] sm:text-[2.2rem]">{currentStepInfo.title}</h2>
+          <p className="max-w-2xl text-base leading-8 text-slate-600">{currentStepInfo.description}</p>
         </div>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           {currentStep === 1 ? (
+            <div className="space-y-4">
+              {INTERES_OPTIONS.map((option) => (
+                <label
+                  key={option}
+                  className={`flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition ${
+                    formData.interes_principal === option
+                      ? "border-[#F26122] bg-[#F26122]/10 text-[#B94818]"
+                      : "border-[#D9D9D9] bg-white text-slate-700 hover:border-[#2E6FD8]/35"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="interes_principal"
+                    value={option}
+                    checked={formData.interes_principal === option}
+                    onChange={handleSelectChange}
+                    className="h-4 w-4 text-[#F26122] focus:ring-[#F26122]"
+                  />
+                  <span className="text-base font-medium">{option}</span>
+                </label>
+              ))}
+            </div>
+          ) : null}
+
+          {/* Dynamic steps based on interest */}
+          {formData.interes_principal === "Quiero vender productos con Ventmar" && currentStep === 2 ? (
+            <SelectField
+              id="nivel_dropshipper"
+              label="Nivel de experiencia"
+              value={formData.nivel_dropshipper}
+              options={NIVEL_DROPSHIPPER_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Quiero vender productos con Ventmar" && currentStep === 3 ? (
+            <SelectField
+              id="ventas_mensuales"
+              label="Ventas mensuales aproximadas"
+              value={formData.ventas_mensuales}
+              options={VENTAS_MENSUALES_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Quiero vender productos con Ventmar" && currentStep === 4 ? (
+            <SelectField
+              id="busca_principal"
+              label="Lo que buscas principalmente"
+              value={formData.busca_principal}
+              options={BUSCA_PRINCIPAL_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Quiero vender productos con Ventmar" && currentStep === 5 ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <InputField
                 id="nombre"
-                label="Nombre"
+                label="Nombre completo"
                 value={formData.nombre}
                 onChange={handleInputChange}
                 placeholder="Tu nombre completo"
                 autoComplete="name"
                 required
-                className="space-y-2 sm:col-span-2"
+              />
+              <InputField
+                id="whatsapp"
+                label="WhatsApp"
+                value={formData.whatsapp}
+                onChange={handleInputChange}
+                placeholder="+54 9 11 1234 5678"
+                type="tel"
+                autoComplete="tel"
+                required
+              />
+              <InputField
+                id="email"
+                label="Email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="tu@email.com"
+                type="email"
+                autoComplete="email"
+                required
+              />
+              <InputField
+                id="ciudad"
+                label="Ciudad"
+                value={formData.ciudad}
+                onChange={handleInputChange}
+                placeholder="Tu ciudad"
+                autoComplete="address-level2"
+                required
+              />
+              {formData.busca_principal === "Participar en reunión privada" ? (
+                <InputField
+                  id="dni"
+                  label="DNI (solo para evento privado)"
+                  value={formData.dni || ""}
+                  onChange={handleInputChange}
+                  placeholder="Tu DNI"
+                  required
+                  inputMode="numeric"
+                />
+              ) : null}
+            </div>
+          ) : null}
+
+          {/* Provider path */}
+          {formData.interes_principal === "Soy proveedor y quiero trabajar con Ventmar" && currentStep === 2 ? (
+            <SelectField
+              id="tipo_proveedor"
+              label="Tipo de proveedor"
+              value={formData.tipo_proveedor}
+              options={TIPO_PROVEEDOR_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Soy proveedor y quiero trabajar con Ventmar" && currentStep === 3 ? (
+            <SelectField
+              id="situacion_proveedor"
+              label="Situación actual"
+              value={formData.situacion_proveedor}
+              options={SITUACION_PROVEEDOR_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Soy proveedor y quiero trabajar con Ventmar" && currentStep === 4 ? (
+            <CheckboxGroup
+              label="Categorías que manejas"
+              options={CATEGORIA_PROVEEDOR_OPTIONS}
+              selected={formData.categorias_proveedor}
+              onToggle={handleCategoryToggle as (option: string) => void}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Soy proveedor y quiero trabajar con Ventmar" && currentStep === 5 ? (
+            <div className="space-y-4">
+              <p className="text-sm font-medium text-slate-800">¿Te interesa participar en una reunión privada con el equipo de Ventmar?</p>
+              <div className="flex gap-6">
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="radio"
+                    name="interes_reunion_proveedor"
+                    value="Sí"
+                    checked={formData.interes_reunion_proveedor === "Sí"}
+                    onChange={handleSelectChange}
+                    className="h-4 w-4 text-[#F26122] focus:ring-[#F26122]"
+                  />
+                  <span className="text-sm font-medium">Sí</span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="radio"
+                    name="interes_reunion_proveedor"
+                    value="No"
+                    checked={formData.interes_reunion_proveedor === "No"}
+                    onChange={handleSelectChange}
+                    className="h-4 w-4 text-[#F26122] focus:ring-[#F26122]"
+                  />
+                  <span className="text-sm font-medium">No</span>
+                </label>
+              </div>
+            </div>
+          ) : null}
+
+          {formData.interes_principal === "Soy proveedor y quiero trabajar con Ventmar" && currentStep === 6 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InputField
+                id="nombre"
+                label="Nombre completo"
+                value={formData.nombre}
+                onChange={handleInputChange}
+                placeholder="Tu nombre completo"
+                autoComplete="name"
+                required
+              />
+              <InputField
+                id="whatsapp"
+                label="WhatsApp"
+                value={formData.whatsapp}
+                onChange={handleInputChange}
+                placeholder="+54 9 11 1234 5678"
+                type="tel"
+                autoComplete="tel"
+                required
+              />
+              <InputField
+                id="email"
+                label="Email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="tu@email.com"
+                type="email"
+                autoComplete="email"
+                required
+              />
+              <InputField
+                id="ciudad"
+                label="Ciudad"
+                value={formData.ciudad}
+                onChange={handleInputChange}
+                placeholder="Tu ciudad"
+                autoComplete="address-level2"
+                required
+              />
+              <InputField
+                id="empresa_marca"
+                label="Empresa o marca"
+                value={formData.empresa_marca || ""}
+                onChange={handleInputChange}
+                placeholder="Nombre de tu empresa o marca"
+                required
+              />
+            </div>
+          ) : null}
+
+          {/* WhatsApp IA path */}
+          {formData.interes_principal === "Me interesa el agente IA para WhatsApp" && currentStep === 2 ? (
+            <SelectField
+              id="tipo_negocio_whatsapp"
+              label="Tipo de negocio"
+              value={formData.tipo_negocio_whatsapp}
+              options={TIPO_NEGOCIO_WHATSAPP_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Me interesa el agente IA para WhatsApp" && currentStep === 3 ? (
+            <SelectField
+              id="que_lograr_whatsapp"
+              label="Qué quieres lograr"
+              value={formData.que_lograr_whatsapp}
+              options={QUE_LOGRAR_WHATSAPP_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Me interesa el agente IA para WhatsApp" && currentStep === 4 ? (
+            <SelectField
+              id="situacion_actual_whatsapp"
+              label="Situación actual"
+              value={formData.situacion_actual_whatsapp}
+              options={SITUACION_ACTUAL_WHATSAPP_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Me interesa el agente IA para WhatsApp" && currentStep === 5 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InputField
+                id="nombre"
+                label="Nombre completo"
+                value={formData.nombre}
+                onChange={handleInputChange}
+                placeholder="Tu nombre completo"
+                autoComplete="name"
+                required
+              />
+              <InputField
+                id="whatsapp"
+                label="WhatsApp"
+                value={formData.whatsapp}
+                onChange={handleInputChange}
+                placeholder="+54 9 11 1234 5678"
+                type="tel"
+                autoComplete="tel"
+                required
+              />
+              <InputField
+                id="email"
+                label="Email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="tu@email.com"
+                type="email"
+                autoComplete="email"
+                required
+              />
+              <InputField
+                id="ciudad"
+                label="Ciudad"
+                value={formData.ciudad}
+                onChange={handleInputChange}
+                placeholder="Tu ciudad"
+                autoComplete="address-level2"
+                required
+              />
+            </div>
+          ) : null}
+
+          {/* Landing path */}
+          {formData.interes_principal === "Me interesa una landing de alta conversión" && currentStep === 2 ? (
+            <SelectField
+              id="que_necesitas_landing"
+              label="Qué necesitas"
+              value={formData.que_necesitas_landing}
+              options={QUE_NECESITAS_LANDING_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Me interesa una landing de alta conversión" && currentStep === 3 ? (
+            <SelectField
+              id="objetivo_landing"
+              label="Objetivo principal"
+              value={formData.objetivo_landing}
+              options={OBJETIVO_LANDING_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Me interesa una landing de alta conversión" && currentStep === 4 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InputField
+                id="nombre"
+                label="Nombre completo"
+                value={formData.nombre}
+                onChange={handleInputChange}
+                placeholder="Tu nombre completo"
+                autoComplete="name"
+                required
+              />
+              <InputField
+                id="whatsapp"
+                label="WhatsApp"
+                value={formData.whatsapp}
+                onChange={handleInputChange}
+                placeholder="+54 9 11 1234 5678"
+                type="tel"
+                autoComplete="tel"
+                required
+              />
+              <InputField
+                id="email"
+                label="Email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="tu@email.com"
+                type="email"
+                autoComplete="email"
+                required
+              />
+              <InputField
+                id="ciudad"
+                label="Ciudad"
+                value={formData.ciudad}
+                onChange={handleInputChange}
+                placeholder="Tu ciudad"
+                autoComplete="address-level2"
+                required
+              />
+            </div>
+          ) : null}
+
+          {/* Banners path */}
+          {formData.interes_principal === "Me interesan banners publicitarios" && currentStep === 2 ? (
+            <SelectField
+              id="tipo_banners"
+              label="Tipo de banners"
+              value={formData.tipo_banners}
+              options={TIPO_BANNERS_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Me interesan banners publicitarios" && currentStep === 3 ? (
+            <SelectField
+              id="que_buscas_banners"
+              label="Qué buscas"
+              value={formData.que_buscas_banners}
+              options={QUE_BUSCAS_BANNERS_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Me interesan banners publicitarios" && currentStep === 4 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InputField
+                id="nombre"
+                label="Nombre completo"
+                value={formData.nombre}
+                onChange={handleInputChange}
+                placeholder="Tu nombre completo"
+                autoComplete="name"
+                required
+              />
+              <InputField
+                id="whatsapp"
+                label="WhatsApp"
+                value={formData.whatsapp}
+                onChange={handleInputChange}
+                placeholder="+54 9 11 1234 5678"
+                type="tel"
+                autoComplete="tel"
+                required
+              />
+              <InputField
+                id="email"
+                label="Email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="tu@email.com"
+                type="email"
+                autoComplete="email"
+                required
+              />
+              <InputField
+                id="ciudad"
+                label="Ciudad"
+                value={formData.ciudad}
+                onChange={handleInputChange}
+                placeholder="Tu ciudad"
+                autoComplete="address-level2"
+                required
+              />
+            </div>
+          ) : null}
+
+          {/* Content path */}
+          {formData.interes_principal === "Me interesa contenido para redes" && currentStep === 2 ? (
+            <SelectField
+              id="contenido_redes"
+              label="Tipo de contenido"
+              value={formData.contenido_redes}
+              options={CONTENIDO_REDES_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Me interesa contenido para redes" && currentStep === 3 ? (
+            <SelectField
+              id="objetivo_contenido"
+              label="Objetivo principal"
+              value={formData.objetivo_contenido}
+              options={OBJETIVO_CONTENIDO_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Me interesa contenido para redes" && currentStep === 4 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InputField
+                id="nombre"
+                label="Nombre completo"
+                value={formData.nombre}
+                onChange={handleInputChange}
+                placeholder="Tu nombre completo"
+                autoComplete="name"
+                required
+              />
+              <InputField
+                id="whatsapp"
+                label="WhatsApp"
+                value={formData.whatsapp}
+                onChange={handleInputChange}
+                placeholder="+54 9 11 1234 5678"
+                type="tel"
+                autoComplete="tel"
+                required
+              />
+              <InputField
+                id="email"
+                label="Email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="tu@email.com"
+                type="email"
+                autoComplete="email"
+                required
+              />
+              <InputField
+                id="ciudad"
+                label="Ciudad"
+                value={formData.ciudad}
+                onChange={handleInputChange}
+                placeholder="Tu ciudad"
+                autoComplete="address-level2"
+                required
+              />
+            </div>
+          ) : null}
+
+          {/* Event path */}
+          {formData.interes_principal === "Quiero asistir a un evento privado" && currentStep === 2 ? (
+            <SelectField
+              id="que_interesa_evento"
+              label="Qué te interesa del evento"
+              value={formData.que_interesa_evento}
+              options={QUE_INTERESA_EVENTO_OPTIONS}
+              required
+              onChange={handleSelectChange}
+            />
+          ) : null}
+
+          {formData.interes_principal === "Quiero asistir a un evento privado" && currentStep === 3 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <InputField
+                id="nombre"
+                label="Nombre completo"
+                value={formData.nombre}
+                onChange={handleInputChange}
+                placeholder="Tu nombre completo"
+                autoComplete="name"
+                required
               />
               <InputField
                 id="whatsapp"
@@ -583,8 +1405,8 @@ export default function HomePage() {
               />
               <InputField
                 id="dni"
-                label="DNI"
-                value={formData.dni}
+                label="DNI (requerido para evento privado)"
+                value={formData.dni || ""}
                 onChange={handleInputChange}
                 placeholder="Tu DNI"
                 required
@@ -593,90 +1415,58 @@ export default function HomePage() {
             </div>
           ) : null}
 
-          {currentStep === 2 ? (
+          {/* Explorer path */}
+          {formData.interes_principal === "Quiero conocer primero cómo funciona" && currentStep === 2 ? (
             <SelectField
-              id="nivel_usuario"
-              label="Nivel de usuario"
-              value={formData.nivel_usuario}
-              options={NIVEL_OPTIONS}
+              id="que_conocer"
+              label="Qué te interesa conocer"
+              value={formData.que_conocer}
+              options={QUE_CONOCER_OPTIONS}
               required
               onChange={handleSelectChange}
             />
           ) : null}
 
-          {currentStep === 3 ? (
+          {formData.interes_principal === "Quiero conocer primero cómo funciona" && currentStep === 3 ? (
             <div className="grid gap-4 sm:grid-cols-2">
-              <SelectField
-                id="ventas_semanales"
-                label="Ventas semanales"
-                value={formData.ventas_semanales}
-                options={VENTAS_OPTIONS}
-                required
-                onChange={handleSelectChange}
-              />
-              <SelectField
-                id="proveedor_local"
-                label="Proveedor local"
-                value={formData.proveedor_local}
-                options={PROVEEDOR_OPTIONS}
-                required
-                onChange={handleSelectChange}
-              />
-            </div>
-          ) : null}
-
-          {currentStep === 4 ? (
-            <div className="space-y-5">
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-slate-800">Categorias de interes</p>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {CATEGORY_OPTIONS.map((category) => {
-                    const active = formData.categorias_interes.includes(category);
-                    return (
-                      <label
-                        key={category}
-                        className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition ${
-                          active
-                            ? "border-[#F26122] bg-[#F26122]/10 text-[#B94818]"
-                            : "border-[#D9D9D9] bg-white text-slate-700 hover:border-[#2E6FD8]/35"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={active}
-                          onChange={() => handleCategoryToggle(category)}
-                          className="h-4 w-4 rounded border-slate-300 text-[#F26122] focus:ring-[#F26122]"
-                        />
-                        <span className="text-sm font-medium">{category}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
               <InputField
-                id="producto_interes"
-                label="Producto de interes"
-                value={formData.producto_interes}
+                id="nombre"
+                label="Nombre completo"
+                value={formData.nombre}
                 onChange={handleInputChange}
-                placeholder="Ejemplo: serum facial, masajeador, gadget viral"
-              />
-            </div>
-          ) : null}
-
-          {currentStep === 5 ? (
-            <div className="space-y-5">
-              <SelectField
-                id="interes_stock_argentina"
-                label="Interes en stock en Argentina"
-                value={formData.interes_stock_argentina}
-                options={EVENTO_OPTIONS}
+                placeholder="Tu nombre completo"
+                autoComplete="name"
                 required
-                onChange={handleSelectChange}
               />
-              <div className="rounded-3xl border border-[#F2D35E]/70 bg-[#F2D35E]/20 px-4 py-4 text-sm leading-7 text-[#7A5A00]">
-                Esta aplicacion nos permite priorizar asistentes con mayor afinidad comercial para el evento privado de Ventmar Argentina.
-              </div>
+              <InputField
+                id="whatsapp"
+                label="WhatsApp"
+                value={formData.whatsapp}
+                onChange={handleInputChange}
+                placeholder="+54 9 11 1234 5678"
+                type="tel"
+                autoComplete="tel"
+                required
+              />
+              <InputField
+                id="email"
+                label="Email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="tu@email.com"
+                type="email"
+                autoComplete="email"
+                required
+              />
+              <InputField
+                id="ciudad"
+                label="Ciudad"
+                value={formData.ciudad}
+                onChange={handleInputChange}
+                placeholder="Tu ciudad"
+                autoComplete="address-level2"
+                required
+              />
             </div>
           ) : null}
 
@@ -703,13 +1493,13 @@ export default function HomePage() {
               {currentStep === 1 ? "Volver arriba" : "Volver"}
             </button>
 
-            {currentStep < TOTAL_STEPS ? (
+            {currentStep < totalSteps ? (
               <button type="button" onClick={nextStep} className={primaryButtonClass}>
                 Continuar
               </button>
             ) : (
               <button type="submit" disabled={isSubmitting} className={primaryButtonClass}>
-                {isSubmitting ? "Enviando..." : "Finalizar aplicacion"}
+                {isSubmitting ? "Enviando..." : "Finalizar aplicación"}
               </button>
             )}
           </div>
