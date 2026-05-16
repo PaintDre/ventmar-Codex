@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexsell — Guía General</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #fff;
+    color: #111;
+  }
+
+  /* Each .page = one PDF page, A4 portrait */
+  .page {
+    width: 794px;
+    min-height: 1123px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+  }
+  .page:last-child { page-break-after: avoid; }
+
+  @page { size: A4 portrait; margin: 0; }
+  @media print {
+    body { background: #fff; }
+    .page { page-break-after: always; }
+  }
+
+  /* ── COLORS ── */
+  :root {
+    --purple: #7c3aed;
+    --purple-mid: #a78bfa;
+    --purple-light: #ede9fe;
+    --green: #059669;
+    --green-light: #d1fae5;
+    --blue: #2563eb;
+    --blue-light: #dbeafe;
+    --orange: #d97706;
+    --orange-light: #fef3c7;
+    --gray: #6b7280;
+    --gray-light: #f3f4f6;
+    --dark: #111827;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    background: linear-gradient(150deg, #1e0545 0%, #0f0a2e 55%, #0a1628 100%);
+    color: white;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 48px;
+  }
+
+  .cover-logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 48px;
+  }
+
+  .cover-badge {
+    display: inline-block;
+    background: rgba(167,139,250,0.15);
+    border: 1px solid rgba(167,139,250,0.3);
+    color: #c4b5fd;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 999px;
+    margin-bottom: 24px;
+  }
+
+  .cover h1 {
+    font-size: 52px;
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 20px;
+  }
+
+  .cover h1 span {
+    background: linear-gradient(135deg, #a78bfa, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .cover-sub {
+    font-size: 16px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.65;
+    max-width: 480px;
+    margin: 0 auto 48px;
+  }
+
+  .cover-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 56px;
+  }
+
+  .cpill {
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .cp1 { background: rgba(124,58,237,0.2); color: #c4b5fd; border: 1px solid rgba(124,58,237,0.3); }
+  .cp2 { background: rgba(5,150,105,0.2);  color: #6ee7b7; border: 1px solid rgba(5,150,105,0.3); }
+  .cp3 { background: rgba(37,99,235,0.2);  color: #93c5fd; border: 1px solid rgba(37,99,235,0.3); }
+  .cp4 { background: rgba(217,119,6,0.2);  color: #fde68a; border: 1px solid rgba(217,119,6,0.3); }
+
+  .cover-footer {
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── INNER PAGES ── */
+  .inner {
+    padding: 52px 52px 40px;
+    justify-content: flex-start;
+    background: #fff;
+  }
+
+  .section-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+
+  .tag-purple { background: var(--purple-light); color: var(--purple); }
+  .tag-green  { background: var(--green-light);  color: var(--green); }
+  .tag-blue   { background: var(--blue-light);   color: var(--blue); }
+  .tag-orange { background: var(--orange-light); color: var(--orange); }
+
+  .page-title {
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--dark);
+    line-height: 1.15;
+    margin-bottom: 8px;
+  }
+
+  .page-title .accent-purple { color: var(--purple); }
+  .page-title .accent-green  { color: var(--green); }
+  .page-title .accent-blue   { color: var(--blue); }
+  .page-title .accent-orange { color: var(--orange); }
+
+  .page-intro {
+    font-size: 14px;
+    color: var(--gray);
+    line-height: 1.65;
+    max-width: 580px;
+    margin-bottom: 28px;
+    border-left: 3px solid var(--purple-light);
+    padding-left: 14px;
+  }
+
+  .divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin-bottom: 28px;
+  }
+
+  /* ── CARDS GRID ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+
+  .card {
+    background: var(--gray-light);
+    border-radius: 14px;
+    padding: 20px 18px;
+  }
+
+  .card-icon {
+    font-size: 22px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 5px;
+  }
+
+  .card p {
+    font-size: 12.5px;
+    color: var(--gray);
+    line-height: 1.55;
+  }
+
+  .card.accent-purple { background: var(--purple-light); }
+  .card.accent-green  { background: var(--green-light); }
+  .card.accent-blue   { background: var(--blue-light); }
+  .card.accent-orange { background: var(--orange-light); }
+
+  /* ── STEPS ── */
+  .steps { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--gray-light);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+
+  .step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .num-purple { background: var(--purple-light); color: var(--purple); }
+  .num-green  { background: var(--green-light);  color: var(--green); }
+  .num-blue   { background: var(--blue-light);   color: var(--blue); }
+  .num-orange { background: var(--orange-light); color: var(--orange); }
+
+  .step-body h4 { font-size: 13.5px; font-weight: 700; color: var(--dark); margin-bottom: 3px; }
+  .step-body p  { font-size: 12.5px; color: var(--gray); line-height: 1.5; }
+
+  /* ── FEATURE ROW ── */
+  .feature-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--gray-light);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+  }
+
+  .feature-row .icon { font-size: 24px; flex-shrink: 0; }
+  .feature-row h4 { font-size: 13.5px; font-weight: 700; color: var(--dark); margin-bottom: 3px; }
+  .feature-row p  { font-size: 12.5px; color: var(--gray); line-height: 1.5; }
+
+  /* ── PLANS TABLE ── */
+  .plans { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+
+  .plan {
+    border-radius: 14px;
+    padding: 22px 18px;
+    border: 2px solid transparent;
+    background: var(--gray-light);
+  }
+
+  .plan.featured {
+    background: var(--purple-light);
+    border-color: var(--purple);
+  }
+
+  .plan-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+
+  .badge-gray   { background: #e5e7eb; color: #6b7280; }
+  .badge-purple { background: var(--purple); color: white; }
+  .badge-dark   { background: var(--dark); color: white; }
+
+  .plan-name { font-size: 18px; font-weight: 800; color: var(--dark); margin-bottom: 4px; }
+  .plan-price { font-size: 13px; color: var(--gray); margin-bottom: 12px; }
+
+  .plan-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--dark);
+    margin-bottom: 6px;
+  }
+
+  .plan-item::before { content: '✓'; color: var(--green); font-weight: 700; font-size: 13px; }
+  .plan-item.no { color: #9ca3af; }
+  .plan-item.no::before { content: '×'; color: #d1d5db; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .callout-purple { background: var(--purple-light); border-left: 4px solid var(--purple); }
+  .callout-green  { background: var(--green-light);  border-left: 4px solid var(--green); }
+  .callout-orange { background: var(--orange-light); border-left: 4px solid var(--orange); }
+
+  .callout-icon { font-size: 20px; flex-shrink: 0; }
+  .callout p { font-size: 13px; color: var(--dark); line-height: 1.55; }
+  .callout strong { font-weight: 700; }
+
+  /* ── PAGE FOOTER ── */
+  .page-footer {
+    margin-top: auto;
+    padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .page-footer span { font-size: 11px; color: #9ca3af; }
+
+  /* ── SUMMARY PAGE ── */
+  .summary-bg {
+    background: linear-gradient(150deg, #1e0545 0%, #0f0a2e 55%, #0a1628 100%);
+    color: white;
+    justify-content: center;
+    align-items: center;
+    padding: 52px 52px 40px;
+    text-align: center;
+  }
+
+  .summary-bg h2 {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    color: white;
+  }
+
+  .summary-bg .sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 36px;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto 36px;
+    text-align: left;
+  }
+
+  .summary-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 18px 16px;
+  }
+
+  .summary-card .sc-icon { font-size: 20px; margin-bottom: 8px; display: block; }
+  .summary-card h4 { font-size: 13px; font-weight: 700; color: white; margin-bottom: 4px; }
+  .summary-card p { font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.5; }
+
+  .summary-footer { font-size: 12px; color: rgba(255,255,255,0.2); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PAGE 1: COVER                              -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="page cover">
+  <div class="cover-logo">NEXSELL · Guía de usuario</div>
+  <div class="cover-badge">✦ Guía rápida</div>
+  <h1>Todo lo que podés<br>hacer en <span>Nexsell</span></h1>
+  <p class="cover-sub">Tu plataforma para crear productos, generar banners con IA y explorar el catálogo Dropi — en un solo lugar.</p>
+  <div class="cover-pills">
+    <span class="cpill cp1">📊 Dashboard</span>
+    <span class="cpill cp2">📦 Productos</span>
+    <span class="cpill cp3">🎨 Banners IA</span>
+    <span class="cpill cp4">🛍️ Dropi</span>
+  </div>
+  <div class="cover-footer">nexsell.ai · 2025</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PAGE 2: DASHBOARD                          -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="page inner">
+  <div class="section-tag tag-purple">01 · Panel de control</div>
+  <h2 class="page-title">Tu <span class="accent-purple">Dashboard</span></h2>
+  <p class="page-intro">
+    El dashboard es tu punto de partida cada vez que ingresás. De un vistazo tenés el estado de tu cuenta y acceso rápido a todo.
+  </p>
+  <div class="divider"></div>
+
+  <div class="grid-2">
+    <div class="card accent-purple">
+      <span class="card-icon">💳</span>
+      <h3>Créditos disponibles</h3>
+      <p>Ves cuántos créditos te quedan del mes y cuántos usaste. Los créditos se usan para generar banners.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">📦</span>
+      <h3>Mis productos</h3>
+      <p>Total de productos cargados en tu cuenta, con acceso directo para crear uno nuevo.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🏷️</span>
+      <h3>Mis banners</h3>
+      <p>Acceso rápido a todos los banners generados hasta el momento.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">⭐</span>
+      <h3>Tu plan activo</h3>
+      <p>Muestra el tipo de suscripción y la opción de hacer upgrade si estás en el plan gratuito.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-purple">
+    <span class="callout-icon">💡</span>
+    <p>Si es tu primera vez, el dashboard te muestra una <strong>guía de 3 pasos</strong> para que arranques rápido: cargar un producto, generar un banner y publicar.</p>
+  </div>
+
+  <div class="page-footer">
+    <span>nexsell.ai</span>
+    <span>2 / 6</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PAGE 3: PRODUCTOS                          -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="page inner">
+  <div class="section-tag tag-green">02 · Productos</div>
+  <h2 class="page-title">Gestioná tus <span class="accent-green">Productos</span></h2>
+  <p class="page-intro">
+    Los productos son la base de todo en Nexsell. Cada banner que generás se apoya en la info y las imágenes de tu producto.
+  </p>
+  <div class="divider"></div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num num-green">1</div>
+      <div class="step-body">
+        <h4>Subí las imágenes del producto</h4>
+        <p>Hasta 4 imágenes. Cuanto mejor la imagen, mejor el banner generado por la IA.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num num-green">2</div>
+      <div class="step-body">
+        <h4>Completá nombre, categoría y precio</h4>
+        <p>El precio se muestra en la moneda de tu país automáticamente.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num num-green">3</div>
+      <div class="step-body">
+        <h4>Elegí tu audiencia objetivo</h4>
+        <p>Nexsell usa esta info para adaptar el mensaje de tus banners al público correcto.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num num-green">4</div>
+      <div class="step-body">
+        <h4>Guardá y listo</h4>
+        <p>Desde la ficha del producto podés editar, eliminar o ir directo a generar banners.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-green">
+    <span class="callout-icon">✅</span>
+    <p>Podés tener <strong>múltiples productos</strong> en tu cuenta y generar banners para cada uno por separado.</p>
+  </div>
+
+  <div class="page-footer">
+    <span>nexsell.ai</span>
+    <span>3 / 6</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PAGE 4: BANNERS IA                         -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="page inner">
+  <div class="section-tag tag-blue">03 · Banners con IA</div>
+  <h2 class="page-title">Generá <span class="accent-blue">Banners</span> con IA</h2>
+  <p class="page-intro">
+    Nexsell crea secuencias de banners publicitarios usando inteligencia artificial. Siguen la estructura AIDA para maximizar conversiones.
+  </p>
+  <div class="divider"></div>
+
+  <div class="grid-3" style="margin-bottom:18px;">
+    <div class="card accent-blue">
+      <span class="card-icon">✍️</span>
+      <h3>Paso 1</h3>
+      <p>Describí el producto y agregá un slogan opcional.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">📐</span>
+      <h3>Paso 2</h3>
+      <p>Elegí la cantidad de banners y el formato de imagen.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">⬇️</span>
+      <h3>Paso 3</h3>
+      <p>Descargá los banners listos para publicar.</p>
+    </div>
+  </div>
+
+  <div class="feature-row">
+    <span class="icon">🎯</span>
+    <div>
+      <h4>Secuencias AIDA</h4>
+      <p>Elegís 2, 3, 5 o 7 banners. Cada set sigue una secuencia: gancho visual → beneficio → oferta → acción.</p>
+    </div>
+  </div>
+
+  <div class="feature-row">
+    <span class="icon">📏</span>
+    <div>
+      <h4>Formatos disponibles</h4>
+      <p>1080×1080 (Instagram), 1200×628 (Facebook), 728×90 (web). Elegís según dónde vas a publicar.</p>
+    </div>
+  </div>
+
+  <div class="feature-row">
+    <span class="icon">🎨</span>
+    <div>
+      <h4>Modo Auto o Custom</h4>
+      <p>En Auto la IA decide el estilo. En Custom controlás el tono (Premium, Directo, Audaz) y el objetivo del banner.</p>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>nexsell.ai</span>
+    <span>4 / 6</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PAGE 5: DROPI                              -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="page inner">
+  <div class="section-tag tag-orange">04 · Catálogo Dropi</div>
+  <h2 class="page-title">Explorá el catálogo <span class="accent-orange">Dropi</span></h2>
+  <p class="page-intro">
+    Nexsell incluye el catálogo de Dropi directamente en tu cuenta. Explorá productos ganadores, descargá recursos y generá anuncios sin salir de la plataforma.
+  </p>
+  <div class="divider"></div>
+
+  <div class="grid-2" style="margin-bottom:18px;">
+    <div class="card">
+      <span class="card-icon">🔍</span>
+      <h3>Buscá y filtrá</h3>
+      <p>Buscá por nombre o filtrá por categoría. La búsqueda funciona aunque escribas sin acentos.</p>
+    </div>
+    <div class="card accent-orange">
+      <span class="card-icon">🖼️</span>
+      <h3>Descargá imágenes</h3>
+      <p>Hasta 3 imágenes por producto, empaquetadas en un ZIP con un solo click.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">🎬</span>
+      <h3>Descargá videos</h3>
+      <p>Hasta 3 videos por producto para usar en tus anuncios de redes sociales.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon">✨</span>
+      <h3>Generá anuncios</h3>
+      <p>Desde el producto de Dropi podés generar un anuncio con IA usando su imagen principal.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-orange">
+    <span class="callout-icon">📦</span>
+    <p>El catálogo es actualizado por el administrador con productos seleccionados. <strong>No necesitás una cuenta en Dropi</strong> para acceder — está todo integrado en Nexsell.</p>
+  </div>
+
+  <div class="page-footer">
+    <span>nexsell.ai</span>
+    <span>5 / 6</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- PAGE 6: PLANES + RESUMEN                   -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="page summary-bg">
+  <div class="section-tag tag-purple" style="margin-bottom:14px;">05 · Planes</div>
+  <h2>Elegí tu plan</h2>
+  <p class="sub">Los créditos mensuales determinan cuántos banners podés generar.</p>
+
+  <div class="plans" style="width:100%;max-width:640px;margin:0 auto 28px;">
+    <div class="plan">
+      <div class="plan-badge badge-gray">Free</div>
+      <div class="plan-name">Gratis</div>
+      <div class="plan-price">Sin costo</div>
+      <div class="plan-item">Créditos limitados</div>
+      <div class="plan-item">Catálogo Dropi</div>
+      <div class="plan-item no">Banners ilimitados</div>
+      <div class="plan-item no">Soporte prioritario</div>
+    </div>
+    <div class="plan featured">
+      <div class="plan-badge badge-purple">⭐ Popular</div>
+      <div class="plan-name">Starter</div>
+      <div class="plan-price">Mensual o anual (−17%)</div>
+      <div class="plan-item">Más créditos por mes</div>
+      <div class="plan-item">Catálogo Dropi</div>
+      <div class="plan-item">Todos los formatos</div>
+      <div class="plan-item no">Créditos ilimitados</div>
+    </div>
+    <div class="plan">
+      <div class="plan-badge badge-dark">Pro</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-price">Mensual o anual (−17%)</div>
+      <div class="plan-item">Máximos créditos</div>
+      <div class="plan-item">Catálogo Dropi</div>
+      <div class="plan-item">Todos los formatos</div>
+      <div class="plan-item">Soporte prioritario</div>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span class="sc-icon">📊</span>
+      <h4>Dashboard</h4>
+      <p>Créditos, productos y banners de un vistazo.</p>
+    </div>
+    <div class="summary-card">
+      <span class="sc-icon">📦</span>
+      <h4>Productos</h4>
+      <p>Cargá imágenes, precio y audiencia.</p>
+    </div>
+    <div class="summary-card">
+      <span class="sc-icon">🎨</span>
+      <h4>Banners IA</h4>
+      <p>Secuencias AIDA listas para publicar.</p>
+    </div>
+    <div class="summary-card">
+      <span class="sc-icon">🛍️</span>
+      <h4>Dropi</h4>
+      <p>Catálogo integrado con descarga de recursos.</p>
+    </div>
+  </div>
+
+  <div class="summary-footer">nexsell.ai · Guía general de usuario · 2025</div>
+</div>
+
+</body>
+</html>
