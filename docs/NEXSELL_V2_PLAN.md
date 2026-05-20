@@ -98,7 +98,10 @@ V3 — Viral Machine
 | Video template (Creatomate, 30s) | 3 créditos | ~$0.12 USD | ~69% |
 | Video con avatar/voz (Kling, 15-30s) | 10 créditos | ~$0.42–0.84 USD | ~32–48% |
 
-**Regla:** Créditos del plan mensual vencen a fin de mes. Créditos de recarga extra no vencen nunca.
+**Reglas confirmadas ✅**
+- Créditos del plan mensual: **vencen a fin del período, sin rollover**
+- Créditos de recarga extra: **no vencen nunca**
+- Plan Free: **10 créditos de trial al registrarse, no se renuevan**
 
 ### Análisis vs competencia
 
@@ -158,15 +161,14 @@ Internacional: USD. Pago vía Stripe.
 
 ### Estrategia recomendada
 
-**Fase 1 (V1):** Implementar solo Mercado Pago.
+**Fase 1 (V1) ✅ CONFIRMADO:** Solo Mercado Pago.
 - Cubre Argentina (mercado principal), Chile, México, Brasil
-- SDK más simple de implementar
 - Suscripciones disponibles (Mercado Pago Subscriptions)
 - Sin restricciones geográficas para el target principal
 
 **Fase 2:** Agregar Stripe para usuarios de países no cubiertos por MP (USA, Europa, etc.)
 
-> **PENDIENTE:** Confirmar si el modelo de subscriptions de Mercado Pago cubre el caso de uso de créditos mensuales + recargas. Testear en sandbox antes de decidir.
+> **Verificar antes de codear:** Confirmar que Mercado Pago Subscriptions soporta el flujo de créditos mensuales + recargas puntuales. Testear en sandbox primero.
 
 ### Arquitectura de billing (abstracta)
 
@@ -401,16 +403,25 @@ NEXT_PUBLIC_APP_URL=
 
 ---
 
-## 12. Decisiones pendientes (para resolver antes de codear)
+## 12. Decisiones
 
-- [ ] **Pricing final:** ¿Agregar plan Agency ($99) desde el inicio o solo en V2?
-- [ ] **Billing V1:** ¿Solo Mercado Pago en V1 o también Stripe?
-- [ ] **Reset de créditos:** ¿Se resetean el día 1 de cada mes o en el aniversario de suscripción?
-- [ ] **Rollover:** ¿Los créditos mensuales no usados desaparecen o se traslada un % (ej: 20%)?
-- [ ] **Dropi sync:** ¿Catálogo sincroniza automático (cron) o manual (botón)?
-- [ ] **Templates de video:** ¿Cuántos templates en el MVP? ¿Quién los crea?
-- [ ] **Límites del free:** ¿Los 10 créditos free son por siempre o solo el primer mes?
-- [ ] **Admin:** ¿Quién puede ser admin? ¿Solo hardcoded en ENV o tabla en DB?
+### Confirmadas ✅
+
+| Decisión | Respuesta |
+|----------|-----------|
+| **Billing V1** | Solo Mercado Pago. Stripe se agrega en V2 para mercados internacionales. |
+| **Plan Free** | 10 créditos de trial al registrarse. No se renuevan. Para seguir usando, debe suscribirse. |
+| **Créditos no usados** | Se pierden al vencer el mes. Sin rollover. |
+| **Plan Agency** | No en V1. Se evalúa en V2 según demanda. |
+| **Landing page generator** | No en V1 ni V2 próximo. Fase separada. |
+| **Email automations** | No en V1 ni V2 próximo. Fase separada. |
+
+### Pendientes ⏳
+
+- [ ] **Dropi sync:** ¿Catálogo sincroniza automático (cron cada 6h) o manual (botón refresh)?
+- [ ] **Templates de video MVP:** ¿Cuántos templates al lanzar? ¿Quién los diseña?
+- [ ] **Admin access:** ¿Solo emails hardcodeados en ENV o tabla `admin_users` en DB?
+- [ ] **Reset de créditos mensual:** ¿El día 1 del mes o en el aniversario de la suscripción?
 
 ---
 
