@@ -357,11 +357,11 @@ nexsell-v2/
 | API | Para qué | Documentación |
 |-----|---------|--------------|
 | Supabase | DB, Auth, Storage, Edge Fns | supabase.com/docs |
-| Creatomate | Render de videos template | creatomate.com/docs/api |
+| Creatomate | Render y gestión de templates de video | creatomate.com/docs/api |
 | Kling AI | Videos con avatar (V2) | klingai.com/developer |
 | Mercado Pago | Billing LatAm | mercadopago.com.ar/developers |
 | Stripe | Billing internacional (V2) | stripe.com/docs |
-| Dropi API | Catálogo de productos | (credenciales del cliente) |
+| Dropi API | Catálogo de productos — ver sección 15 | dev.dropi.co |
 | ExchangeRate API | Tipo de cambio para mostrar precios locales | exchangerate-api.com |
 
 ---
@@ -412,16 +412,18 @@ NEXT_PUBLIC_APP_URL=
 | **Billing V1** | Solo Mercado Pago. Stripe se agrega en V2 para mercados internacionales. |
 | **Plan Free** | 10 créditos de trial al registrarse. No se renuevan. Para seguir usando, debe suscribirse. |
 | **Créditos no usados** | Se pierden al vencer el mes. Sin rollover. |
+| **Reset créditos mensual** | En el aniversario de la suscripción (mismo día del mes que se suscribió). |
+| **Admin access V1** | ENV hardcodeado. Solo founder por ahora. Migrar a tabla en DB cuando haya equipo. |
+| **Templates de video** | Los videos del founder (Drive) → subir a Creatomate como bases de templates. Thumbnails en Supabase Storage. |
 | **Plan Agency** | No en V1. Se evalúa en V2 según demanda. |
 | **Landing page generator** | No en V1 ni V2 próximo. Fase separada. |
 | **Email automations** | No en V1 ni V2 próximo. Fase separada. |
 
 ### Pendientes ⏳
 
-- [ ] **Dropi sync:** ¿Catálogo sincroniza automático (cron cada 6h) o manual (botón refresh)?
-- [ ] **Templates de video MVP:** ¿Cuántos templates al lanzar? ¿Quién los diseña?
-- [ ] **Admin access:** ¿Solo emails hardcodeados en ENV o tabla `admin_users` en DB?
-- [ ] **Reset de créditos mensual:** ¿El día 1 del mes o en el aniversario de la suscripción?
+- [ ] **Dropi V1 model:** Confirmar si usuarios de Nexsell ya tienen cuenta Dropi propia. Definir si V1 es credenciales por usuario (Modelo A) o gestionar partnership con Dropi primero.
+- [ ] **Templates de video MVP:** ¿Cuántos templates al lanzar? Requiere subir videos del Drive a Creatomate y configurar las variables de cada template.
+- [ ] **Dropi sync automático:** Una vez definido el modelo de integración con Dropi.
 
 ---
 
@@ -498,7 +500,118 @@ Usuario → Edge Function (crea registro en generations, descuenta créditos)
 
 ### Dropi catalog
 
-El catálogo Dropi se sincroniza en background cada X horas (cron en Supabase) y se cachea en la tabla `dropi_products`. El usuario busca contra el caché local, no contra la API de Dropi en tiempo real.
+El catálogo Dropi se sincroniza en background y se cachea en la tabla `dropi_products`. El usuario busca contra el caché local, no contra la API de Dropi en tiempo real. El modelo de integración define quién tiene la key (ver sección 15).
+
+---
+
+## 15. Integración con Dropi — estrategia
+
+### Lo que encontramos
+
+Dropi tiene API oficial de integración. Portal en `dev.dropi.co`. Para acceder se debe solicitar al equipo de IT de Dropi proveyendo: dominio de la plataforma, IP de los servidores, datos del solicitante y uso proyectado. Autenticación vía header `dropi-integration-key`.
+
+Dropi ya tiene integraciones con Shopify, WooCommerce y Tiendanube. El concepto de app/partner existe.
+
+### Tres modelos posibles
+
+**Modelo A — Credenciales por usuario (V1, inmediato)**
+- Cada usuario de Nexsell ingresa su propio token/credenciales de Dropi en sus settings
+- Nexsell usa esas credenciales para acceder a la API de Dropi en nombre del usuario
+- Ventaja: sin gestión con Dropi, cada quien usa su cuenta propia
+- Desventaja: fricción de onboarding (el usuario necesita saber encontrar su token en Dropi)
+
+**Modelo B — Partnership de plataforma (V2, requiere acuerdo)**
+- Nexsell obtiene una integration key oficial de Dropi para toda la plataforma
+- El catálogo de Dropi está disponible para TODOS los usuarios de Nexsell sin que ellos tengan cuenta en Dropi
+- Nexsell actúa como plataforma autorizada
+- Requiere contactar a Dropi business/IT y firmar algún acuerdo
+
+**Modelo C — OAuth por usuario, Nexsell como partner (V2, más completo)**
+- Nexsell se registra como integration partner de Dropi
+- Usuarios conectan su cuenta Dropi vía OAuth dentro de Nexsell
+- Nexsell puede: acceder al catálogo del usuario, importar productos, y potencialmente sincronizar pedidos
+- Similar al modelo de Shopify apps
+- El más completo pero requiere mayor esfuerzo de negociación con Dropi
+
+### Decisión recomendada
+
+```
+V1 → Modelo A (credenciales por usuario, sin dependencia de Dropi)
+V2 → Iniciar conversación con Dropi para Modelo B o C
+     Contacto: equipo IT de Dropi via dropi.co
+```
+
+### Tabla dropi_products (actualización)
+
+Para Modelo A, la tabla `dropi_products` es el cache del catálogo. El cron de sincronización usa la key del usuario que la configuró. Para Modelo B/C, el cache es global.
+
+```sql
+-- Campo extra para Modelo A: qué usuario configuró la key que trajo este producto
+dropi_products
+  ...
+  synced_by_user_id uuid  -- null si es cache global (Modelo B/C)
+  ...
+```
+
+---
+
+## 16. Templates de video — arquitectura
+
+### Pipeline de trabajo del founder
+
+```
+1. Videos en Google Drive (material del founder)
+         ↓
+2. Importar a Creatomate Template Editor
+   (editar variables: {imagen_producto}, {titulo}, {precio}, {cta})
+         ↓
+3. Cada template queda con un template_id en Creatomate
+         ↓
+4. Crear thumbnail PNG del template → subir a Supabase Storage
+         ↓
+5. Registrar template en tabla video_templates de Nexsell
+```
+
+### Tabla video_templates
+
+```sql
+video_templates
+  id uuid PK
+  name text                    -- "Template Producto Trending"
+  description text
+  thumbnail_url text           -- URL en Supabase Storage
+  creatomate_template_id text  -- ID en Creatomate
+  duration_seconds int         -- duración del video resultante
+  input_variables jsonb        -- qué variables acepta el template
+  category text                -- 'product_showcase', 'testimonial', 'trending'
+  is_active bool
+  plan_required text           -- 'free', 'starter', 'pro' (templates premium)
+  created_at timestamptz
+```
+
+### Variables estándar por template
+
+```json
+{
+  "product_image_url": "URL de imagen del producto",
+  "product_name": "Nombre del producto",
+  "product_price": "Precio formateado (ej: $29.990)",
+  "cta_text": "Texto del botón/CTA (ej: 'Compralo ahora')",
+  "brand_color": "Color hex del usuario (ej: #FF6B35)",
+  "logo_url": "Logo del vendedor (opcional)"
+}
+```
+
+### Google Drive → Creatomate: pasos
+
+1. Descargar videos del Drive a local
+2. En Creatomate dashboard: New Template → Upload video as layer
+3. Reemplazar los textos/imágenes hardcodeadas por `{{variable}}`
+4. Preview el template → ajustar timing
+5. Copiar el `template_id` del template creado
+6. Capturar screenshot del preview → guardar como thumbnail
+
+**Cantidad recomendada para MVP:** 3–5 templates bien hechos es suficiente para lanzar. Mejor 3 perfectos que 10 mediocres.
 
 ---
 
